@@ -16,7 +16,7 @@ func TestDecode(t *testing.T) {
 	msgtype, payload, err := codec.Decode()
 	require.NoError(t, err, "error decode message")
 	require.Equal(t, Task, msgtype, "decode message type")
-	require.Equal(t, payload[10], byte(0xde), "payload decode message")
+	require.Equal(t, byte(0xde), payload[10], "payload decode message")
 }
 
 func TestEncode(t *testing.T) {
