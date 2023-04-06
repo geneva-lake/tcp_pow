@@ -1,0 +1,8 @@
+# порт, который слушает сервис
+port: 9005
+# порт, на который надо слать запрос метрик
+difficulty: 100
+# файл с цитатами
+wisdom_file: word_of_wisdom.txt
+# многопоточность для gnet
+multicore: false

@@ -1,0 +1,4 @@
+# адрес к которому подключится
+address: localhost:9005
+# многопоточность для gnet
+multicore: false

@@ -1,0 +1,16 @@
+FROM golang:latest as build
+ENV CGO_ENABLED=0
+ENV GO111MODULE=on
+WORKDIR /app
+COPY . .
+RUN go get ./...
+WORKDIR /app/server
+RUN go build -o server
+
+FROM alpine:latest
+COPY --from=build /app/server /bin/
+COPY --from=build /app/server/server.yaml /bin/
+COPY --from=build /app/server/word_of_wisdom.txt /bin/
+WORKDIR /bin 
+
+CMD ["/bin/server"]
