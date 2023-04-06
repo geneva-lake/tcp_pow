@@ -2,15 +2,13 @@ package protocol
 
 import (
 	"encoding/binary"
-	"io"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 )
 
 func TestDecode(t *testing.T) {
-	pipeReader, pipeWriter := io.Pipe()
-	tg := &TestGnet{pipeReader, pipeWriter}
+	tg := NewTestGnet()
 	codec := NewCodec(tg)
 	data := []byte{0x00, 0x02, 0x00, 0x00, 0x00, 0x20, 0x00, 0x00, 0x00, 0x64, 0xde, 0xad, 0xbe, 0xef, 0xde, 0xad, 0xbe, 0xef, 0xde, 0xad, 0xbe, 0xef, 0xde, 0xad, 0xbe,
 		0xef, 0xde, 0xad, 0xbe, 0xef, 0xde, 0xad, 0xbe, 0xef, 0xde, 0xad, 0xbe, 0xef, 0xde, 0xad, 0xbe, 0xef}
@@ -18,16 +16,14 @@ func TestDecode(t *testing.T) {
 	msgtype, payload, err := codec.Decode()
 	require.NoError(t, err, "error decode message")
 	require.Equal(t, Task, msgtype, "decode message type")
-	require.Equal(t, payload[10], 0xde, "payload decode message")
+	require.Equal(t, payload[10], byte(0xde), "payload decode message")
 }
 
 func TestEncode(t *testing.T) {
-	pipeReader, pipeWriter := io.Pipe()
-	tg := &TestGnet{pipeReader, pipeWriter}
+	tg := NewTestGnet()
 	codec := NewCodec(tg)
 	data := []byte{0x00, 0x00, 0x00, 0x64, 0xde, 0xad, 0xbe, 0xef, 0xde, 0xad, 0xbe, 0xef, 0xde, 0xad, 0xbe, 0xef, 0xde, 0xad, 0xbe,
 		0xef, 0xde, 0xad, 0xbe, 0xef, 0xde, 0xad, 0xbe, 0xef, 0xde, 0xad, 0xbe, 0xef, 0xde, 0xad, 0xbe, 0xef}
-	go tg.Write(data)
 	err := codec.Encode(Task, data)
 	require.NoError(t, err, "error encode message")
 	payload := make([]byte, 42)
@@ -40,11 +36,22 @@ func TestEncode(t *testing.T) {
 }
 
 type TestGnet struct {
-	*io.PipeReader
-	*io.PipeWriter
+	buffer []byte
+}
+
+func NewTestGnet() *TestGnet {
+	tg := &TestGnet{
+		buffer: make([]byte, 100),
+	}
+	return tg
 }
 
 func (tg *TestGnet) Write(buf []byte) (int, error) {
-	go tg.PipeWriter.Write(buf)
+	copy(tg.buffer, buf)
 	return 0, nil
+}
+
+func (tg *TestGnet) Read(buf []byte) (int, error) {
+	copy(buf, tg.buffer[:len(buf)])
+	return len(buf), nil
 }
